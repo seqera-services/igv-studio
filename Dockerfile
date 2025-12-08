@@ -8,15 +8,19 @@ FROM public.cr.seqera.io/platform/connect-client:${CONNECT_CLIENT_VERSION} AS co
 
 FROM ubuntu:20.04
 
-USER root
-
-# Install nginx, curl, and jq for downloading IGV webapp and processing JSON
-RUN apt-get update && apt-get install -y \
+# Install nginx, curl, and jq for downloading IGV webapp and processing JSON  
+RUN apt-get update --yes && apt-get install --yes --no-install-recommends \
     nginx \
     curl \
     unzip \
     jq \
+    python3 \
+    sudo \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy connect client from Seqera base image and install early
+COPY --from=connect /usr/bin/connect-client /usr/bin/connect-client
+RUN /usr/bin/connect-client --install
 
 # Create directories for IGV webapp
 RUN mkdir -p /opt/igv-webapp /etc/nginx/sites-enabled
@@ -44,10 +48,6 @@ COPY start.sh /usr/local/bin/start.sh
 RUN chmod +x /usr/local/bin/start.sh \
     && chmod +x /usr/local/bin/discover-data-links.sh \
     && chmod +x /usr/local/bin/generate-igv-config.sh
-
-# Copy connect client from Seqera base image
-COPY --from=connect /usr/bin/connect-client /usr/bin/connect-client
-RUN /usr/bin/connect-client --install
 
 # Remove default nginx configuration and create symlink
 RUN rm -f /etc/nginx/sites-enabled/default \
