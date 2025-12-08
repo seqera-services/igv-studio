@@ -1,7 +1,7 @@
 # IGV Web App Studio for Seqera Platform
 
 # Add a default Connect client version. Can be overridden by build arg
-ARG CONNECT_CLIENT_VERSION="0.8"
+ARG CONNECT_CLIENT_VERSION="0.9.0"
 
 # Seqera base image
 FROM public.cr.seqera.io/platform/connect-client:${CONNECT_CLIENT_VERSION} AS connect
@@ -53,12 +53,6 @@ RUN chmod +x /usr/local/bin/start.sh \
 RUN rm -f /etc/nginx/sites-enabled/default \
     && ln -s /etc/nginx/sites-available/igv-app /etc/nginx/sites-enabled/default
 
-# Create a non-root user for better security
-RUN useradd -m -s /bin/bash igvuser && \
-    echo "igvuser ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
-
-# Switch to connect user
-USER igvuser
-
 # Use connect client as entrypoint with our startup script
+# Note: Running as root is required for connect-client to set up loop devices for Fusion
 ENTRYPOINT ["/usr/bin/connect-client", "--entrypoint", "/usr/local/bin/start.sh"]
